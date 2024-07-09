@@ -1,0 +1,52 @@
+1. A sentence is given (eg 10 words)
+2. Find embeddings using Word2Vec or some other model (any vector size e.g. 10x512 : one row for each word)
+
+3. Get a timing matrix/ signal/ encoding
+4. Add with input embeddings to get Positional embeddings of input
+5. Now we have input matrix X (dim : 10x512)
+
+ENCODER
+{
+SINGLE HEAD ATTENTION
+
+3. Randomly initialize Wq, Wk, Wv (Weights of query, key and value : dim 512x64)(randomly initialize)
+4. Multiply input embeddings with Wq, Wk, Wv to get Q, K and V matrices (dim: 10x64)
+5. Now we have Query, Key and value vectors for each word
+6. Multiply Q and K matrices, dot product (Q x K.T) (dim: 10x64 x 64x10 = 10x10)
+7. Scale by (square_root(dimensions of Query vector i.e. 64))
+8. Take the SoftMax of resultant matrix to get probability distr (dim: 10x10)
+9. Multiply resultant to Value matrix (dim : 10x10 x 10x64 = 10x64)
+10. Now we have the Z0 matrix
+
+MULTI-HEAD ATTENTION
+
+11. Doing the single head attention 8 times will give us 8 Z matrices (All the steps)
+12. Feed 8 Zs into Feed forward network or ANN but it only expects 1 matrix
+13. Concat 8 matrices in series .i.e. Z0, Z1,Z2...,Z7 (dim : 10 x (64x8))
+14. Multiply this resultant matrix with W0 (weight matix, dim :(64x8) x 512)
+15. Now we finally get Z matrix (dim : 10 x 512) (This Z captures info from all attention heads)
+16. Add Z with input X
+17. Normalize resultant
+18. Feed resultant in FFNN
+19. Add and normalize again
+}
+
+20. Output of this encoder is fed into another encoder layer (6 mentioned in paper)
+21. Final output has the complete representation of our input sentence
+
+DECODER
+
+1. It has 2 multi-head attention blocks
+2. Input is fed one at a time and one output is generated at each time stamp
+3. In first iteration first input word is fed and remaing all words are maksed as -infinity
+4. Multihead attention is calculated
+5. Addition and normalization
+5. Output of this goes into next multihead attention block
+6. Here, value matix is generated from input but Query and key matirces are taken from encoder block (cross-attention)
+- Encoder ouput is multiplied with weight another matrices to get Query and Key for Decoder
+7. Again normalization
+8. FFNN
+9. Normaliation
+10. Linear layer
+11. Softmax
+12. Output will be probability distr which will then give a word from the other language vocab
